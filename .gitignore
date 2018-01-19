@@ -1,0 +1,18 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Folders with models, data
+data/
+models/
+db/
+
+# Folders with private info
+*keys*
+
+# mysql cnf files
+*.cnf
+
