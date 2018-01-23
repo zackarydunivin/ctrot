@@ -2,7 +2,9 @@ import gensim.models as gs
 from collections import defaultdict
 from pprint import pprint
 import glob, gzip
-import pickle 
+import pickle
+import gensim
+
 _gnews_path  = '../models/w2v/GoogleNews-vectors-negative300.bin'
 _ghent_path = '../models/w2v/word2vec_twitter_model.bin'
 
@@ -59,7 +61,7 @@ if __name__ == "__main__":
 
     sentences = SentenceGenerator(opts.timelines_glob) # a memory-friendly iterator
     model = gensim.models.Word2Vec(sentences, size=300, min_count=10)
-    with ('my_model.p', 'b') as f:
+    with open('my_model.p', 'wb') as f:
         pickle.dump(model,f)
 
 
