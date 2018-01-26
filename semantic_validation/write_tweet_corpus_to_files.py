@@ -34,7 +34,7 @@ def cucco_normalizations(text,keep_emoji=True):
     ('replace_urls', {'replacement': ' '}),
     #('replace_characters', {'characters':{'\'','ʼ','’'},'replacement':''}),
     # leaving @ allows us to remove handles with TweetTokineizer
-    ('replace_punctuation', {'replacement': ' ','excluded':'@'}),
+    ('replace_punctuation', {'replacement': ' ','excluded':''}),
 
     ]
 
@@ -109,6 +109,7 @@ def reassemble_emoji_from_utf8_string(text):
     text_len = len(text) 
     chars = [body[i:i+4] for i in range(0,text_len,4)] 
     return reassemble_emoji_from_utf8_char_list(chars)
+
 def reassemble_emoji_from_utf8_char_list(chars):
     # code borrowed from https://github.com/fionapigott/emoji-counter/blob/master/parse_utf32.py 
     j = 0
@@ -184,6 +185,7 @@ if __name__ == "__main__":
     parser.add_argument('-keep_emoji', action='store_true', help='keep emoji when removing symbols from tweets ')
     parser.add_argument('-single_retweets', action='store_true', help='Have only a signle copy of a retweeted status rather than as many times as it appears in the corpus.')
     parser.add_argument('-no_write', action='store_true', help='Don\'t write to an out file')
+    parser.add_argument('-filter_for_en', action='store_true', help='Only select english tweets')
 
     opts = parser.parse_args()
 
@@ -191,13 +193,14 @@ if __name__ == "__main__":
     batch_count = 0
     to_be_written = []
     for gz in sorted(glob.glob(opts.timelines_glob)):
+        print(gz)
         file_dir = os.path.dirname(os.path.realpath('__file__'))
         out_filename = os.path.basename(gz)
-        out_filename = out_filename[0:-3]+'_parsed_tweet_text.txt'
+        out_filename = out_filename[0:-3]+'_parsed_tweet_text.txt.gz'
         filename = os.path.join(file_dir, '../data/parsed_timelines', out_filename)
         filename = os.path.abspath(os.path.realpath(filename))
 
-        f = open(filename,'w')
+        f = gzip.open(filename,'wb')
         for tweet in tqdm(gzip_timeline_generator(gz)):
             if not tweet:
                 continue
@@ -214,6 +217,9 @@ if __name__ == "__main__":
                     continue
                 else:
                     seen_retweets.add(retweeted_status['id'])
+            if opts.filter_for_en:
+                if tweet['lang'] != 'en':
+                    continue
 
             text = tweet['text']
 
@@ -295,7 +301,17 @@ if __name__ == "__main__":
             
             if batch_count > 10000:
                 for tweet in to_be_written:
-                    f.write("%s\n" % tweet)
+                    line = '%s\n' % tweet
+                    f.write(line.encode('utf-8'))
                 # reset batch
                 batch_count = 0
                 to_be_written = []
+        # end of the gz doc
+        # write what remains
+        if batch_count:
+            for tweet in to_be_written:
+                line = '%s\n' % tweet
+                f.write(line.encode('utf-8'))
+            # reset batch
+            batch_count = 0
+            to_be_written = []
