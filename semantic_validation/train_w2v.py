@@ -86,7 +86,7 @@ if __name__ == "__main__":
         # .bin or .bin.gz
         else:
             model = KeyedVectors.load_word2vec_format(opts.model_filename, binary=True, unicode_errors='ignore')
-        sys.stdout.write("OK.\r")
+        sys.stdout.write("OK.\n")
     else:
         sys.stdout.write("Training model %s . . . " % opts.model_filename)
         sentences = SentenceGenerator(opts.timelines_glob) # a memory-friendly iterator
@@ -98,14 +98,13 @@ if __name__ == "__main__":
             os.makedirs(model_dir)
         model_path = os.path.join(model_dir, model_fname) 
         model.save(model_path)
-        sys.stdout.write("OK.\r")
+        sys.stdout.write("OK.\n")
 
     standard_report = model_accuracy_report(model.accuracy('w2v_validation/standard_validation.txt'))
     wn_report = model_accuracy_report(model.accuracy('w2v_validation/wn_validation.txt'))
     file_dir = os.path.dirname(os.path.realpath('__file__'))
     model_fname = os.path.splitext(os.path.basename(opts.model_filename))[0]
     report_dir =  os.path.join(file_dir, 'w2v_validation/%s' % model_fname)
-    print('model write report_dir: %s' % report_dir)
     if not os.path.exists(report_dir):
         os.makedirs(report_dir)
     report_fname = os.path.join(report_dir, model_fname +'_accuracy_report.txt') 
