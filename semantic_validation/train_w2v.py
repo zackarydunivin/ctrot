@@ -75,14 +75,16 @@ if __name__ == "__main__":
     default_model_fname = 'w2v_model_' + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H:%M:%S')
     parser.add_argument('-model_filename', type=str, default=default_model_fname)
     parser.add_argument('-load_model', action='store_true', help='a w2v .bin to be loaded and validated')
+    parser.add_argument('-num_workers', type=int, default=1)
+    parser.add_argument('-out_dim', type=int, default=300)
+    parser.add_argument('-min_count', type=int, default=10)
     opts = parser.parse_args()
     if opts.load_model:
         sys.stdout.write("Loading model %s . . . " % opts.model_filename)
         if os.path.splitext(opts.model_filename)[1] == '.p':
-            with open(opts.model_filename,'rb') as f:
-                model = pickle.load(f)
+            model = Word2Vec.load(opts.model_filename)
         elif os.path.splitext(opts.model_filename)[1] == '.txt':
-            model = Word2Vec.load_word2vec_format(opts.model_filename, binary=False, unicode_errors='ignore')
+            model = KeyedVectors.load_word2vec_format(opts.model_filename, binary=False, unicode_errors='ignore')
         # .bin or .bin.gz
         else:
             model = KeyedVectors.load_word2vec_format(opts.model_filename, binary=True, unicode_errors='ignore')
@@ -90,13 +92,13 @@ if __name__ == "__main__":
     else:
         sys.stdout.write("Training model %s . . . " % opts.model_filename)
         sentences = SentenceGenerator(opts.timelines_glob) # a memory-friendly iterator
-        model = Word2Vec(sentences, size=300, min_count=10)
+        model = Word2Vec(sentences, size=opts.out_dim, min_count=opts.min_count, workers=opts.num_workers)
         file_dir = os.path.dirname(os.path.realpath('__file__'))
         model_fname = os.path.splitext(os.path.basename(opts.model_filename))[0]
-        model_dir =  os.path.join(file_dir, 'w2v_validation/%s' % model_fname + '.p')
+        model_dir =  os.path.join(file_dir, 'w2v_validation/%s' % model_fname)
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
-        model_path = os.path.join(model_dir, model_fname) 
+        model_path = os.path.join(model_dir, model_fname+ '.p') 
         model.save(model_path)
         sys.stdout.write("OK.\n")
 
