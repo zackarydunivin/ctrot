@@ -28,10 +28,15 @@ def gzip_timeline_generator(filename):
 
 cucco = Cucco()
 def cucco_normalizations(text,keep_emoji=True):
+    # replace urls
+    url_regex = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+    text = re.sub(url_regex,'',text)
+    
     normalizations = [
     #'remove_stop_words',
     'remove_accent_marks',
-    ('replace_urls', {'replacement': ' '}),
+    # replace urls has error and may hang infintely!
+    #('replace_urls', {'replacement': ' '}),
     #('replace_characters', {'characters':{'\'','ʼ','’'},'replacement':''}),
     # leaving @ allows us to remove handles with TweetTokineizer
     ('replace_punctuation', {'replacement': ' ','excluded':''}),
@@ -182,10 +187,12 @@ if __name__ == "__main__":
     # main function arguments...
     parser.add_argument('-timelines_glob', type=str, required=True)
     parser.add_argument('-out_filename', type=str)
+    parser.add_argument('-out_dir_path', type=str) 
     parser.add_argument('-keep_emoji', action='store_true', help='keep emoji when removing symbols from tweets ')
     parser.add_argument('-single_retweets', action='store_true', help='Have only a signle copy of a retweeted status rather than as many times as it appears in the corpus.')
     parser.add_argument('-no_write', action='store_true', help='Don\'t write to an out file')
     parser.add_argument('-filter_for_en', action='store_true', help='Only select english tweets')
+    parser.add_argument('-unnormalized', action='store_true', help='Usually we noramlize text with a normalization dictionary')
 
     opts = parser.parse_args()
 
@@ -193,11 +200,15 @@ if __name__ == "__main__":
     batch_count = 0
     to_be_written = []
     for gz in sorted(glob.glob(opts.timelines_glob)):
-        print(gz)
+        sys.stdout.write('Parsing and writing %s ...' % gz)
+        sys.stdout.flush()
         file_dir = os.path.dirname(os.path.realpath('__file__'))
         out_filename = os.path.basename(gz)
         out_filename = out_filename[0:-3]+'_parsed_tweet_text.txt.gz'
-        filename = os.path.join(file_dir, '../data/parsed_timelines', out_filename)
+        if not opts.out_dir_path:
+            filename = os.path.join(file_dir, '../data/parsed_timelines', out_filename)
+        else:
+            filename = os.path.join(opts.out_dir_path, out_filename)
         filename = os.path.abspath(os.path.realpath(filename))
 
         f = gzip.open(filename,'wb')
@@ -206,7 +217,12 @@ if __name__ == "__main__":
                 continue
 
             tweet = tweet.decode("utf8").replace(",\n","")
-            tweet = json.loads(tweet)
+            try:
+                tweet = json.loads(tweet)
+            # somethings funny about this tweet
+            # no matter, there are millions more!
+            except json.decoder.JSONDecodeError:
+                continue
 
             # keep track of retweets and only have one copy of each
             # if we also have the original tweet in the corpus
@@ -240,7 +256,8 @@ if __name__ == "__main__":
             tknzr = TweetTokenizer(preserve_case=False, reduce_len=True, strip_handles=True)
             tokens = tknzr.tokenize(text)
             # normalize for spelling and abbreviations with Han and Baldwin 2012
-            tokens = [emnlp_dict[t] if t in emnlp_dict else t for t in tokens]
+            if not opts.unnormalized:
+                tokens = [emnlp_dict[t] if t in emnlp_dict else t for t in tokens]
             if not tokens:
                 continue
             
@@ -315,3 +332,4 @@ if __name__ == "__main__":
             # reset batch
             batch_count = 0
             to_be_written = []
+    sys.stdout.write('FINISHED.\n')
