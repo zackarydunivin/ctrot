@@ -22,4 +22,10 @@ emoji2vec/results
 emoji2vec/data/word2vec
 emoji2vec/emoji_mapping.p
 emoji2vec/generated_embeddings.p
-emoji2vec/pre-trained
+emoji2vec/pre-trained__/
+
+# sublime ftp
+sftp-config.json
+
+# w2v_models
+*model.p
