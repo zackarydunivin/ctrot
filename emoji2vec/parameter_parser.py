@@ -30,6 +30,7 @@ class CliParser:
 
         # Model parameters
         self.parser.add_argument('-k', '--dim', default=300, type=int, help='train a 300 x k projection matrix')
+        self.parser.add_argument('-ik', '--indim', default=300, type=int)
         self.parser.add_argument('-b', '--batch', default=4, type=int,
                                  help='positive examples in minibatch (total size=batch*(1+ratio)')
         self.parser.add_argument('-e', '--epochs', default=40, type=int, help='number of training epochs')
@@ -37,7 +38,7 @@ class CliParser:
         self.parser.add_argument('-l', '--learning', default=0.001, type=float, help='learning rate')
         self.parser.add_argument('-dr', '--dropout', default=0.1, type=float, help='amount of dropout to use')
         self.parser.add_argument('-t', '--threshold', default=0.5, type=float,
-                                 help='threshold for binary classification')
+                                     help='threshold for binary classification')
 
         # Miscellaneous
         self.parser.add_argument('-ds', '--dataset', default='unicode', type=str, help='unicode or emojipedia')
@@ -46,7 +47,7 @@ class CliParser:
         args = self.parser.parse_args()
 
         # dimensions of projected embeddings
-        self.model_params = ModelParams(300, out_dim=args.dim, pos_ex=args.batch, max_epochs=args.epochs,
+        self.model_params = ModelParams(in_dim=args.indim, out_dim=args.dim, pos_ex=args.batch, max_epochs=args.epochs,
                                         neg_ratio=args.ratio, learning_rate=args.learning, dropout=args.dropout,
                                         class_threshold=args.threshold)
 

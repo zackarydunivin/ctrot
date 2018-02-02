@@ -75,6 +75,8 @@ class Emoji2Vec:
             use_embeddings: If True, embeddings must be passed in, but the model will not accept arbitrary queries
                 If false, it will accept arbitrary queries
         """
+        print("helllo")
+        print(model_params.in_dim, model_params.out_dim)
 
         self.model_params = model_params
         self.num_cols = num_emoji
@@ -83,7 +85,6 @@ class Emoji2Vec:
         # If we are trying to learn the emoji in the same space as the words, we don't need a projection matrix
         # also saves some training time
         is_proj = not (model_params.in_dim == model_params.out_dim)
-
         # Phrase indices in current batch
         self.row = tf.placeholder(tf.int32, shape=[None], name='row')
 
@@ -111,7 +112,7 @@ class Emoji2Vec:
             # Row embeddings (here phrase representations)
             # Don't need to learn this if we stay in the same space
             W = tf.Variable(tf.random_uniform([model_params.in_dim, model_params.out_dim], -0.1, 0.1), name="W")
-            v_row = tf.tanh(tf.ma.multiply(orig_vec, W))
+            v_row = tf.tanh(tf.multiply(orig_vec, W))
         else:
             v_row = orig_vec
 

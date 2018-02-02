@@ -18,7 +18,7 @@ __author__ = "Ben Eisner, Tim Rocktaschel"
 __email__ = "beisner@princeton.edu"
 
 
-def generate_embeddings(ind2phr, kb, embeddings_file, word2vec_file, word2vec_dim=300):
+def generate_embeddings(ind2phr, kb, embeddings_file, word2vec_file, word2vec_dim=400):
     """Generate a numpy array of phrase embeddings for all phrases in the knowledge base.
 
         Since it is expensive to calculate these phrase embeddings every time, we cache the output
@@ -51,7 +51,7 @@ def generate_embeddings(ind2phr, kb, embeddings_file, word2vec_file, word2vec_di
         phrase_vector_sums = pk.load(open(embeddings_file, 'rb'))
 
     # build the embeddings array, for lookup later
-    embeddings_array = np.zeros(shape=[len(ind2phr), 300], dtype=np.float32)
+    embeddings_array = np.zeros(shape=[len(ind2phr), word2vec_dim], dtype=np.float32)
     for ind, phr in ind2phr.items():
         embeddings_array[ind] = phrase_vector_sums[phr]
 
