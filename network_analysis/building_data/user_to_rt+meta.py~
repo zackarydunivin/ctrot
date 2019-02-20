@@ -1,0 +1,84 @@
+
+# coding: utf-8
+
+# # Full user metadata scrape
+# 
+# The goal of this script is to pull out the following data for each user, for use in analysis:
+# 
+# 1. Account creation date
+# 2. First tweet date
+# 3. First retweet date
+# 4. A timeseries of each tweet and its date of occurrence, as well as its number relative to the total number of tweets the user has posted
+# 
+# Assume that this script has the reference folder of a series of zips containing Tweet json objects
+
+# In[1]:
+
+import sqlite3
+from tqdm import tqdm
+import os
+import zipfile
+import gzip as gz
+import json
+from datetime import datetime
+
+
+# In[2]:
+
+data_folder = "/home/vincent/Documents/School/Research/CTROT/"
+rt_files_folder = '/home/vincent/Documents/School/Research/CTROT/us_wn_timelines_rt/'
+#data_folder = "/media/vincent/DataVW/Projects/CTROT/Data/us_wn_timelines_gz/"
+#rt_files_folder = "/media/vincent/DataVW/Projects/CTROT/Data/us_wn_timelines_rt/"
+files = [x for x in os.listdir(data_folder) if 'merged_us_wn' in x]
+
+
+# In[3]:
+
+userdata = {}
+
+rt_files_done = set([])
+
+for fn in files:
+    #Metadata
+    data = gz.open(data_folder + 'merged_us_wn_1degree_followers_unique_aa.gz','rt')
+    for line in tqdm(data):
+        l = json.loads(line.replace(",\n",""))
+        user = l['user']['id']
+        if user not in userdata:
+            userdata[user] = {'first_tweet': l['created_at'], 'tweets': []}
+        #Created_at earliest date
+        if userdata[user]['first_tweet'] < l['created_at']:
+            userdata[user]['first_tweet'] = l['created_at']
+        #For user timeseries, if tweet, append 't'. If retweet, append 'r'
+        if 'retweeted_status' in l:
+            userdata[user]['tweets'].append( (l['created_at'],'r') )
+        else:
+            userdata[user]['tweets'].append( (l['created_at'],'t') )
+    
+        #Creating retweet files
+        if 'retweeted_status' in l:
+            datestr = datetime.strptime( l['created_at'], "%a %b %d %H:%M:%S +0000 %Y").strftime("%Y-%m-%d")
+            if datestr+".csv" not in rt_files_done:
+                rt_files_done.add(datestr+".csv")
+                with open(rt_files_folder + datestr + ".csv", 'w') as f:
+                    f.write("Sender, Receiver\n")
+            with open(rt_files_folder + datestr +".csv", 'a') as f:
+                f.write( "%i, %i\n"%(user, l['retweeted_status']['user']['id']) )
+
+
+# In[ ]:
+
+with open('user_metadata.pickle','wb') as f:
+    pickle.dump(userdata)
+
+
+# To do:
+# 
+# 1. Do update earliest tweet - figure out datetime object before or after (DONE)
+# 2. Convert tweet date to string for rt_file creation - Figure out how to load str to datetime (DONE)
+# 3. Make sure rt_file is csv (DONE)
+# 4. Code up pushing retweet data to files (DONE)
+# 5. Test it out (DONE) - Takes about 10 minutes per file
+#  * Whoops, accidentally created too many files. Deleting (DONE)
+# 6. Check to make sure the RT csvs are being made correctly (DONE)
+# 7. Push this to a python script (DOING)
