@@ -1,4 +1,3 @@
-from tqdm import tqdm
 import os
 import gzip as gz
 import json
@@ -15,7 +14,7 @@ rt_files_done = set([])
 for fn in files:
     #Metadata
     data = gz.open(dc2_folder + data_folder + 'merged_us_wn_1degree_followers_unique_aa.gz','rt')
-    for line in tqdm(data):
+    for line in data:
         l = json.loads(line.replace(",\n",""))
         user = l['user']['id']
         if user not in userdata:
@@ -40,4 +39,4 @@ for fn in files:
                 f.write( "%i, %i\n"%(user, l['retweeted_status']['user']['id']) )
 
 with open(dc2_folder + 'user_metadata.pickle','wb') as f:
-    pickle.dump(userdata)
+    pickle.dump(userdata,f)
