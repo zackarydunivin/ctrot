@@ -2,6 +2,7 @@ import os
 import gzip as gz
 import json
 from datetime import datetime
+import pickle
 
 dc2_folder = "/N/dc2/scratch/vmwong/"
 data_folder = "us_wn_timelines_gz/"
@@ -28,15 +29,17 @@ for fn in files:
         else:
             userdata[user]['tweets'].append( (l['created_at'],'t') )
     
-        #Creating retweet files
-        if 'retweeted_status' in l:
-            datestr = datetime.strptime( l['created_at'], "%a %b %d %H:%M:%S +0000 %Y").strftime("%Y-%m-%d")
-            if datestr+".csv" not in rt_files_done:
-                rt_files_done.add(datestr+".csv")
-                with open(dc2_folder + rt_files_folder + datestr + ".csv", 'w') as f:
-                    f.write("Sender, Receiver\n")
-            with open(dc2_folder + rt_files_folder + datestr +".csv", 'a') as f:
-                f.write( "%i, %i\n"%(user, l['retweeted_status']['user']['id']) )
+        # #Creating retweet files
+        # if 'retweeted_status' in l:
+        #     datestr = datetime.strptime( l['created_at'], "%a %b %d %H:%M:%S +0000 %Y").strftime("%Y-%m-%d")
+        #     if datestr+".csv" not in rt_files_done:
+        #         rt_files_done.add(datestr+".csv")
+        #         with open(dc2_folder + rt_files_folder + datestr + ".csv", 'w') as f:
+        #             f.write("Sender, Receiver\n")
+        #     with open(dc2_folder + rt_files_folder + datestr +".csv", 'a') as f:
+        #         f.write( "%i, %i\n"%(user, l['retweeted_status']['user']['id']) )
 
-with open(dc2_folder + 'user_metadata.pickle','wb') as f:
-    pickle.dump(userdata,f)
+# with open('user_metadata.pickle','wb') as f:
+#     pickle.dump(userdata,f)
+with open('user_metadata.json', 'w') as file:
+    json.dump(userdata,file)
